@@ -1,0 +1,185 @@
+# Release Workflow
+# Manually trigger to create a versioned release with auto-generated changelog.
+#
+# How to use:
+#   1. Go to Actions > Release > Run workflow
+#   2. Choose version bump type (patch / minor / major)
+#   3. Workflow bumps version, generates changelog, creates GitHub Release
+#
+# Commit format (Conventional Commits):
+#   feat: add echo plugin          → appears under "Features"
+#   fix: resolve MongoDB timeout   → appears under "Bug Fixes"
+#   docs: update plugin guide      → appears under "Documentation"
+#   refactor: clean up logger      → appears under "Refactors"
+#   chore: update dependencies     → appears under "Chores"
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        id: current
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Bump version
+        id: bump
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "${{ inputs.bump }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update version in package.json
+        run: |
+          npm version ${{ steps.bump.outputs.version }} --no-git-tag-version
+
+      - name: Update version in config.js
+        run: |
+          sed -i "s/botVersion: \".*\"/botVersion: \"${{ steps.bump.outputs.version }}\"/" config.js
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${PREVIOUS_TAG}..HEAD"
+          fi
+
+          echo "Generating changelog for range: $RANGE"
+
+          {
+            echo "changelog<<CHANGELOG_EOF"
+
+            # Features
+            FEATS=$(git log $RANGE --pretty=format:"%s" --grep="^feat" 2>/dev/null | sed 's/^feat[:(]//' | sed 's/^[[:space:]]*//' | sed 's/^/- /')
+            if [ -n "$FEATS" ]; then
+              echo "### Features"
+              echo "$FEATS"
+              echo ""
+            fi
+
+            # Bug Fixes
+            FIXES=$(git log $RANGE --pretty=format:"%s" --grep="^fix" 2>/dev/null | sed 's/^fix[:(]//' | sed 's/^[[:space:]]*//' | sed 's/^/- /')
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            # Documentation
+            DOCS=$(git log $RANGE --pretty=format:"%s" --grep="^docs" 2>/dev/null | sed 's/^docs[:(]//' | sed 's/^[[:space:]]*//' | sed 's/^/- /')
+            if [ -n "$DOCS" ]; then
+              echo "### Documentation"
+              echo "$DOCS"
+              echo ""
+            fi
+
+            # Refactors
+            REFACTORS=$(git log $RANGE --pretty=format:"%s" --grep="^refactor" 2>/dev/null | sed 's/^refactor[:(]//' | sed 's/^[[:space:]]*//' | sed 's/^/- /')
+            if [ -n "$REFACTORS" ]; then
+              echo "### Refactors"
+              echo "$REFACTORS"
+              echo ""
+            fi
+
+            # Chores
+            CHORES=$(git log $RANGE --pretty=format:"%s" --grep="^chore" 2>/dev/null | sed 's/^chore[:(]//' | sed 's/^[[:space:]]*//' | sed 's/^/- /')
+            if [ -n "$CHORES" ]; then
+              echo "### Chores"
+              echo "$CHORES"
+              echo ""
+            fi
+
+            # Other (commits that don't match any prefix)
+            OTHERS=$(git log $RANGE --pretty=format:"%s" --invert-grep --grep="^feat" --grep="^fix" --grep="^docs" --grep="^refactor" --grep="^chore" 2>/dev/null | sed 's/^/- /')
+            if [ -n "$OTHERS" ]; then
+              echo "### Other Changes"
+              echo "$OTHERS"
+              echo ""
+            fi
+
+            echo "CHANGELOG_EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Commit version bump
+        run: |
+          git add package.json config.js
+          git commit -m "chore: bump version to v${{ steps.bump.outputs.version }}"
+          git push
+
+      - name: Create tag
+        run: |
+          git tag "v${{ steps.bump.outputs.version }}"
+          git push origin "v${{ steps.bump.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.bump.outputs.version }}"
+          name: "v${{ steps.bump.outputs.version }}"
+          body: |
+            ## Ashley UwU v${{ steps.bump.outputs.version }}
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            **Full Changelog:** https://github.com/${{ github.repository }}/compare/v${{ steps.current.outputs.version }}...v${{ steps.bump.outputs.version }}
+          draft: false
+          prerelease: false
