@@ -1,7 +1,7 @@
 {
     "name": "ashley-uwu",
-    "version": "1.0.0",
-    "description": "Ashley UwU is simple basic bot to create sticker other using customizeable api",
+    "version": "1.0.1",
+    "description": "A modular WhatsApp bot with hot-reload plugin system, built on whatsapp-web.js",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
