@@ -1,0 +1,9 @@
+node_modules/
+.wwebjs_auth/
+.wwebjs_cache/
+.cache_mongodb_wwebjs_auth_undefined/
+RemoteAuth*/
+RemoteAuth*.zip
+wwebjs_temp_session*/
+wwebjs_temp_session_undefined*/
+package-lock.json
