@@ -5,7 +5,7 @@
 module.exports = {
     // ─── Identity ────────────────────────────────────────
     botName: "Ashley UwU",
-    botVersion: "1.0.0",
+    botVersion: "1.0.1",
 
     // ─── Command Prefixes ────────────────────────────────
     prefix: ".",
