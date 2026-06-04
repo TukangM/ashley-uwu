@@ -10,6 +10,7 @@ const qrcode = require("qrcode-terminal");
 const config = require("./config");
 const logger = require("./utils/logger");
 const pluginHandler = require("./handlers/plugin");
+const { resolveChromiumPath } = require("./utils/chromium");
 
 // ─── Load Plugins ────────────────────────────────────────
 pluginHandler.loadPlugins();
@@ -71,29 +72,38 @@ async function createAuthStrategy() {
 async function boot() {
   const authStrategy = await createAuthStrategy();
 
+  // Resolve Chromium path (auto-detect on Linux, bundled on Windows)
+  const chromiumPath = resolveChromiumPath(config);
+
+  const puppeteerOpts = {
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--disable-gpu",
+      "--no-zygote",
+      "--disable-default-apps",
+      "--disable-software-rasterizer",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-extensions",
+      "--disable-plugins",
+      "--disable-translate",
+      "--disable-web-security",
+    ],
+  };
+
+  if (chromiumPath) {
+    puppeteerOpts.executablePath = chromiumPath;
+  }
+
   const client = new Client({
     authStrategy,
-    puppeteer: {
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--disable-gpu",
-        "--no-zygote",
-        "--disable-default-apps",
-        "--disable-software-rasterizer",
-        "--disable-background-timer-throttling",
-        "--disable-backgrounding-occluded-windows",
-        "--disable-renderer-backgrounding",
-        "--disable-extensions",
-        "--disable-plugins",
-        "--disable-translate",
-        "--disable-web-security",
-      ],
-    },
+    puppeteer: puppeteerOpts,
   });
 
   // ─── Events ──────────────────────────────────────────

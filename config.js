@@ -26,6 +26,17 @@ module.exports = {
     // Path override for LocalAuth session storage
     // authDataPath: '.wwebjs_auth',
 
+    // ─── Chromium / Chrome ──────────────────────────────
+    // Path to a system-installed Chromium or Chrome executable.
+    // On Linux (especially ARM64), the bot auto-detects and writes
+    // this value on first run. Set it manually if auto-detect fails.
+    // On Windows this is ignored (Puppeteer's bundled Chrome is used).
+    // Examples:
+    //   '/usr/bin/chromium'
+    //   '/usr/bin/google-chrome-stable'
+    //   '/usr/bin/ungoogled-chromium'
+    // puppeteerExecutablePath: '',
+
     // MongoDB connection string for RemoteAuth
     // mongoUri: 'mongodb://localhost:27017/ashley-uwu',
 
