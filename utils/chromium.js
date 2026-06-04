@@ -131,6 +131,36 @@ function writePathToConfig(execPath) {
   }
 }
 
+/**
+ * Automatically find and delete any stale `SingletonLock` files inside
+ * the session directory. This prevents Chromium from hanging indefinitely
+ * on startup if the bot crashed or was restarted too quickly.
+ */
+function cleanSingletonLock(config) {
+  try {
+    const authPath = config.authDataPath || ".wwebjs_auth";
+    const absoluteAuthPath = path.resolve(process.cwd(), authPath);
+    if (!fs.existsSync(absoluteAuthPath)) return;
+
+    const findAndUnlinkLock = (dir) => {
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.lstatSync(fullPath);
+        if (stat.isDirectory()) {
+          findAndUnlinkLock(fullPath);
+        } else if (file === "SingletonLock") {
+          logger.info(`Chromium: cleaning up stale lock file → ${fullPath}`);
+          fs.unlinkSync(fullPath);
+        }
+      }
+    };
+    findAndUnlinkLock(absoluteAuthPath);
+  } catch (err) {
+    logger.warn(`Chromium lock cleanup warning: ${err.message}`);
+  }
+}
+
 // ─── Public API ─────────────────────────────────────────────
 
 /**
@@ -147,6 +177,9 @@ function writePathToConfig(execPath) {
  * @returns {string|undefined}
  */
 function resolveChromiumPath(config) {
+  // Clean up any stale SingletonLocks from previous crashes or rapid restarts
+  cleanSingletonLock(config);
+
   const platform = os.platform();
   const arch = os.arch();
 

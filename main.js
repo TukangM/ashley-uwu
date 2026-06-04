@@ -75,6 +75,22 @@ async function boot() {
   // Resolve Chromium path (auto-detect on Linux, bundled on Windows)
   const chromiumPath = resolveChromiumPath(config);
 
+  // Check for FFmpeg (required for sticker conversion)
+  try {
+    const { execSync } = require("child_process");
+    const isWin = process.platform === "win32";
+    const cmd = isWin ? "where ffmpeg" : "which ffmpeg";
+    execSync(cmd, { stdio: "ignore" });
+  } catch {
+    logger.warn("FFmpeg was not found in your system PATH.");
+    logger.warn("Sticker and media conversion (.sticker / .toimg) will fail!");
+    logger.warn(
+      process.platform === "win32"
+        ? "Please install FFmpeg and add it to your Windows System PATH."
+        : "Please install FFmpeg:  sudo apt install ffmpeg",
+    );
+  }
+
   const puppeteerOpts = {
     headless: true,
     protocolTimeout: config.puppeteerProtocolTimeout !== undefined ? config.puppeteerProtocolTimeout : 300000,
