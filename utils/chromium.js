@@ -150,6 +150,13 @@ function resolveChromiumPath(config) {
   const platform = os.platform();
   const arch = os.arch();
 
+  // Disable D-Bus connections on Linux to prevent startup hangs/timeouts
+  // in headless, Docker, or systemd-less container environments.
+  if (platform === "linux") {
+    process.env.DBUS_SESSION_BUS_ADDRESS = "disabled:";
+    process.env.DBUS_SYSTEM_BUS_ADDRESS = "disabled:";
+  }
+
   // 1. User/auto-configured path exists and is valid
   if (config.puppeteerExecutablePath) {
     if (isExecutable(config.puppeteerExecutablePath)) {
