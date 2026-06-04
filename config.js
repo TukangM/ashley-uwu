@@ -69,6 +69,18 @@ module.exports = {
         "--js-flags=--max-old-space-size=512", // Caps V8 heap size to 512MB
     ],
 
+    // Timeout for Chromium DevTools Protocol (CDP) commands (ms).
+    // If your device has slow CPU/Disk (like ARM SBCs), increase this
+    // or set it to 0 to disable protocol timeouts completely.
+    // Default: 300000 (5 minutes)
+    puppeteerProtocolTimeout: 300000,
+
+    // Timeout for WhatsApp Web authentication process (ms).
+    // If the device is extremely slow to load the page, increase this
+    // or set it to 0 to disable authentication timeout completely.
+    // Default: 300000 (5 minutes)
+    authTimeoutMs: 300000,
+
     // MongoDB connection string for RemoteAuth
     // mongoUri: 'mongodb://localhost:27017/ashley-uwu',
 

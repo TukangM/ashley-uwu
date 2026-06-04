@@ -77,6 +77,7 @@ async function boot() {
 
   const puppeteerOpts = {
     headless: true,
+    protocolTimeout: config.puppeteerProtocolTimeout !== undefined ? config.puppeteerProtocolTimeout : 300000,
     args: config.puppeteerArgs || [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -104,6 +105,7 @@ async function boot() {
   const clientOpts = {
     authStrategy,
     puppeteer: puppeteerOpts,
+    authTimeoutMs: config.authTimeoutMs !== undefined ? config.authTimeoutMs : 300000,
   };
 
   if (config.useWebVersionCache) {
