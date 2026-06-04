@@ -77,7 +77,7 @@ async function boot() {
 
   const puppeteerOpts = {
     headless: true,
-    args: [
+    args: config.puppeteerArgs || [
       "--no-sandbox",
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
@@ -101,10 +101,20 @@ async function boot() {
     puppeteerOpts.executablePath = chromiumPath;
   }
 
-  const client = new Client({
+  const clientOpts = {
     authStrategy,
     puppeteer: puppeteerOpts,
-  });
+  };
+
+  if (config.useWebVersionCache) {
+    clientOpts.webVersionCache = {
+      type: "local",
+      path: "./.wwebjs_cache/",
+      strict: false,
+    };
+  }
+
+  const client = new Client(clientOpts);
 
   // ─── Events ──────────────────────────────────────────
 

@@ -37,6 +37,38 @@ module.exports = {
     //   '/usr/bin/ungoogled-chromium'
     // puppeteerExecutablePath: '',
 
+    // Enable local caching of WhatsApp Web version files.
+    // This avoids downloading the web client assets from the internet on every start,
+    // saving bandwidth and reducing startup CPU load dramatically.
+    useWebVersionCache: true,
+
+    // Custom Chromium command line flags.
+    // Optimized for low-end / low-RAM ARM64 SBCs by default.
+    // If you have GPU acceleration working (like Mesa Turnip on Linux),
+    // you can remove '--disable-gpu' and '--disable-software-rasterizer'
+    // and add '--ignore-gpu-blocklist' and '--enable-gpu-rasterization'.
+    puppeteerArgs: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--disable-gpu", // Remove this if Turnip Mesa GPU accel is working
+        "--no-zygote",
+        "--disable-default-apps",
+        "--disable-software-rasterizer", // Remove this if GPU accel is working
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-extensions",
+        "--disable-plugins",
+        "--disable-translate",
+        "--disable-web-security",
+        // Additional low-RAM performance tweaks:
+        "--disable-features=site-per-process", // Saves ~10-15% memory by merging processes
+        "--js-flags=--max-old-space-size=512", // Caps V8 heap size to 512MB
+    ],
+
     // MongoDB connection string for RemoteAuth
     // mongoUri: 'mongodb://localhost:27017/ashley-uwu',
 
