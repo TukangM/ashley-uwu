@@ -77,7 +77,6 @@ async function boot() {
 
   const puppeteerOpts = {
     headless: true,
-    dumpio: !!config.puppeteerDumpio,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -95,8 +94,6 @@ async function boot() {
       "--disable-plugins",
       "--disable-translate",
       "--disable-web-security",
-      "--disable-features=dbus",
-      "--password-store=basic",
     ],
   };
 

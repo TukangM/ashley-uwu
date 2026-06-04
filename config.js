@@ -37,10 +37,6 @@ module.exports = {
     //   '/usr/bin/ungoogled-chromium'
     // puppeteerExecutablePath: '',
 
-    // Show Chromium internal logs (stdout/stderr) in terminal.
-    // Useful for debugging headless crashes, missing libraries, or hang issues.
-    puppeteerDumpio: true,
-
     // MongoDB connection string for RemoteAuth
     // mongoUri: 'mongodb://localhost:27017/ashley-uwu',
 
